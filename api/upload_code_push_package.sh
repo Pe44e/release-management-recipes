@@ -13,6 +13,7 @@
 # DEPLOYMENT_ID=DEPLOYMENT_ID_WITHIN_THE_CONNECTED_APP_THE_PACKAGE_WILL_BE_UPLOADED TO \
 # APP_VERSION=1.1.0
 # ROLLOUT=100
+# IS_DISABLED=false
 # IS_MANDATORY=false
 # DESCRIPTION=example text
 # /bin/bash ./scripts/upload_code_push_package.sh
@@ -23,6 +24,12 @@ else
     ROLLOUT_PERCENTAGE=${ROLLOUT}
 fi
 
+if [ -z "${IS_DISABLED}" ]; then
+    DISABLED=false
+else
+    DISABLED=${IS_DISABLED}
+fi
+
 if [ -z "${IS_MANDATORY}" ]; then
     MANDATORY=false
 else
@@ -31,6 +38,8 @@ fi
 
 if [ -z "${DESCRIPTION}" ]; then
     DESCRIPTION=""
+else
+    DESCRIPTION=$(echo ${DESCRIPTION}|jq -sRr @uri)
 fi
 
 # Includes dependency installer and request handler utilities.
@@ -80,7 +89,7 @@ get_upload_information() {
 
   file_name=$(echo "\"$PACKAGE_PATH\"" | jq -r 'split("/") | .[-1]')
   response_body=$(mktemp)
-  http_code=$(curl -w "%{http_code}" -s -H "Authorization: $AUTHORIZATION_TOKEN" -o "$response_body" --data-urlencode "description=$DESCRIPTION" "$RM_API_HOST/release-management/v1/connected-apps/$CONNECTED_APP_ID/code-push/deployments/$DEPLOYMENT_ID/packages/$1/upload-url?file_name=$file_name&file_size_bytes=$file_size_bytes&app_version=$APP_VERSION&rollout=$ROLLOUT_PERCENTAGE&mandatory=$MANDATORY")
+  http_code=$(curl -X GET -w "%{http_code}" -s -H "Authorization: $AUTHORIZATION_TOKEN" -o "$response_body" "$RM_API_HOST/release-management/v1/connected-apps/$CONNECTED_APP_ID/code-push/deployments/$DEPLOYMENT_ID/packages/$1/upload-url?file_name=$file_name&file_size_bytes=$file_size_bytes&app_version=$APP_VERSION&description=$DESCRIPTION&rollout=$ROLLOUT_PERCENTAGE&disabled=$DISABLED&mandatory=$MANDATORY")
   upload_info=$(<"$response_body")
   rm -f "$response_body"
 
