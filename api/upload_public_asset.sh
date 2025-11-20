@@ -87,7 +87,7 @@ get_upload_information() {
 #   Retry count.
 #######################################
 is_processed() {
-  if [[ $2 == 4 ]]; then
+  if [[ $2 == 10 ]]; then
     echo "The asset is still not processed after $2 retries. Exiting..."
 
     exit 1
@@ -109,7 +109,7 @@ is_processed() {
   elif [[ "$status" == "uploaded" ]] || [[ "$status" == "upload_requested" ]]; then
     echo "$status_data"
 
-    sleep 1
+    sleep 2
     is_processed "$1" $2 + 1
   else
     echo "Unexpected status: $status. Exiting..."
